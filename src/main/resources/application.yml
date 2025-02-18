@@ -1,0 +1,53 @@
+spring:
+  datasource:
+#    url: jdbc:h2:tcp://localhost/~/securityTest
+    url: jdbc:h2:tcp://localhost:9093/~/securityTest
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        #        show_sql: true
+        format_sql: true
+        use_sql_comments: true
+  mustache:
+    servlet:
+      expose-request-attributes: true
+
+  spring:
+    redis:
+      host: localhost
+      port: 6379
+
+    kafka:
+      bootstrap-servers: localhost:9092
+      consumer:
+        group-id: newsfeed-group
+        auto-offset-reset: earliest
+        key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+        properties:
+          spring.json.trusted.packages: "*"
+      producer:
+        key-serializer: org.apache.kafka.common.serialization.StringSerializer
+        value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+logging.level:
+  org.hibernate.SQL: debug
+  org.hibernate.type: trace
+  org.springframework: debug
+
+server:
+  servlet:
+    session:
+      timeout: 30m
+
+jwt:
+  secret-key: vDp7NH1pZ1Lf0G/Aq3N5pLhZf0F5fB+tRJdfmXozVwQ=
+  #access-token-validity: 900000
+  access-token-validity: 604800000
+  refresh-token-validity: 604800000
