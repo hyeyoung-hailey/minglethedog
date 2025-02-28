@@ -1,18 +1,21 @@
 package com.example.minglethedog.repository;
 
-import com.example.minglethedog.entity.Post;
-import com.example.minglethedog.entity.QPost;
-import com.example.minglethedog.entity.QUser;
+import com.example.minglethedog.entity.*;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @Repository
 public class PostQueryRepository {
@@ -35,6 +38,40 @@ public class PostQueryRepository {
         }
 
         return new SliceImpl<>(posts, pageable, hasNext);
+    }
+
+    public Slice<Post> getPaginatedFeed(Long lastCursor, Pageable pageable, int remainingSize, List<String> cachedPostIds, Set<String> followingIds) {
+        if (remainingSize == 0) {
+            return new SliceImpl<>(new ArrayList<>(), pageable, false);
+        }
+
+        List<Post> posts = fetchPosts(lastCursor, remainingSize, cachedPostIds, followingIds);
+
+        boolean hasNext = posts.size() > remainingSize;
+        if (hasNext) {
+            posts.remove(posts.size() - 1);
+        }
+
+        return new SliceImpl<>(posts, pageable, hasNext);
+    }
+
+    private List<Post> fetchPosts(Long lastCursor, int remainingSize, List<String> cachedPostIds, Set<String> followingIds) {
+        QPost post = QPost.post;
+
+        Set<Long> followingIdSet = followingIds.stream()
+                .map(Long::valueOf)
+                .collect(Collectors.toSet());
+
+        return queryFactory
+                .selectFrom(post)
+                .where(
+                        post.id.notIn(cachedPostIds.stream().map(Long::valueOf).toList()),
+                        post.author.id.in(followingIdSet),
+                        lastCursor != null ? post.id.lt(lastCursor) : null
+                )
+                .orderBy(post.id.desc())
+                .limit(remainingSize + 1)
+                .fetch();
     }
 
     public Optional<Post> findByIdWithAuthorId(Long id) {
