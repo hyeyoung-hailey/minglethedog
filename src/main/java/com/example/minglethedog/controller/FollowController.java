@@ -18,10 +18,10 @@ public class FollowController {
     private final FollowService followService;
 
     // 팔로우 요청
-    @PostMapping("/{followee_id}")
-    public ResponseEntity<ApiResponse<FollowResponse>> follow(@AuthenticationPrincipal CustomUserDetails currentUser, @PathVariable Long followee_id) {
-        followService.follow(currentUser.getUser().getId(), followee_id);
-        FollowResponse followResponse = new FollowResponse(currentUser.getUser().getId(), followee_id);
+    @PostMapping("/{following_id}")
+    public ResponseEntity<ApiResponse<FollowResponse>> follow(@AuthenticationPrincipal CustomUserDetails currentUser, @PathVariable Long following_id) {
+        followService.follow(currentUser.getUser().getId(), following_id);
+        FollowResponse followResponse = new FollowResponse(currentUser.getUser().getId(), following_id);
 
         return ResponseEntity.ok(ApiResponse.resource(EntityType.FOLLOW, followResponse));
     }
