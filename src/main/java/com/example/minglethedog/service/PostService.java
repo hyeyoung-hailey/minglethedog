@@ -13,6 +13,7 @@ import com.example.minglethedog.repository.PostQueryRepository;
 import com.example.minglethedog.repository.PostRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
@@ -44,12 +45,10 @@ public class PostService {
      * @return 조회된 게시글 정보
      * @throws PostNotFoundException 게시글이 존재하지 않을 경우 발생
      */
-    public PostResponse getPost(Long id) {
-        Post post = postRepository.findById(id).orElseThrow(() ->
+    public Post getPost(Long id) {
+        return postRepository.findById(id).orElseThrow(() ->
                 new EntityNotFoundException(String.valueOf(id))
         );
-
-        return new PostResponse(post.getId(), post.getContent(), post.getAuthor().getId());
     }
 
     /**
@@ -70,7 +69,7 @@ public class PostService {
                 : postList.get(postList.size() - 1).getId();
 
         List<PostResponse> postResponses = postList.stream()
-                .map(post -> new PostResponse(post.getId(), post.getContent(), post.getAuthor().getId()))
+                .map(PostResponse::of)
                 .toList();
 
         return ApiResponse.list(EntityType.POST, hasNext, newLastCursor, postResponses);
