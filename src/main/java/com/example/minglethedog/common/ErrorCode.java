@@ -14,6 +14,7 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "FORBIDDEN", "권한이 없습니다."),
     REFRESH_TOKEN_INVALID(HttpStatus.FORBIDDEN, "REFRESH_TOKEN_INVALID", "Refresh Token이 유효하지 않습니다."),
+    BAD_CREDENTIAL(HttpStatus.FORBIDDEN,"BAD_CREDENTIAL","자격증명에실패했습니다."),
     ACCOUNT_SUSPENDED(HttpStatus.FORBIDDEN, "ACCOUNT_SUSPENDED", "계정이 정지되었습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "존재하지 않는 회원입니다."),
     ENTITY_NOT_FOUND(HttpStatus.NOT_FOUND,"ENTITY_NOT_FOUND","존재하지 않는 리소스입니다. ID:{0}"),
