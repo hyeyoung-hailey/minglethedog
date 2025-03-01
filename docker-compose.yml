@@ -1,28 +1,12 @@
 services:
-  mysql:
-    image: mysql:8
-    container_name: mysql
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: mydb
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
-    ports:
-      - "3306:3306"
-  redis:
-    image: "redis:latest"
-    container_name: redis
-    ports:
-      - "6379:6379"
-    restart: always
-
   zookeeper:
     image: quay.io/debezium/zookeeper:3.0
     container_name: zookeeper
     restart: always
     ports:
       - "2181:2181"
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=2181
 
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -36,26 +20,77 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_BROKER_ID: 1
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"  # ✅ 자동 토픽 생성 활성화
     ports:
       - "9092:9092"
       - "29092:29092"
     depends_on:
       - zookeeper
 
-  debezium:
-    image: quay.io/debezium/connect:latest
-    container_name: debezium
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
     restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: mydb
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: "redis:latest"
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: always
+
+  kafka-connect:
+    image: custom-kafka-connect
+    container_name: kafka-connect
+    restart: always
+    depends_on:
+      - kafka
+      - elasticsearch
     ports:
       - "8083:8083"
     environment:
-      BOOTSTRAP_SERVERS: kafka:9092
-      GROUP_ID: post-group
-      CONFIG_STORAGE_TOPIC: debezium_configs
-      OFFSET_STORAGE_TOPIC: debezium_offsets
-      STATUS_STORAGE_TOPIC: debezium_status
-    #      database.include.list: mydb
-    #      table.include.list: mydb.post
+      - CONNECT_BOOTSTRAP_SERVERS=kafka:9092
+      - CONNECT_GROUP_ID=connect-cluster
+      - CONNECT_CONFIG_STORAGE_TOPIC=connect-configs
+      - CONNECT_OFFSET_STORAGE_TOPIC=connect-offsets
+      - CONNECT_STATUS_STORAGE_TOPIC=connect-statuses
+      - CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR=1
+      - CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR=1
+      - CONNECT_STATUS_STORAGE_REPLICATION_FACTOR=1
+      - CONNECT_REST_ADVERTISED_HOST_NAME=kafka-connect
+      - CONNECT_PLUGIN_PATH=/usr/share/confluent-hub-components
+      - CONNECT_KEY_CONVERTER=org.apache.kafka.connect.json.JsonConverter  # 👈 추가
+      - CONNECT_VALUE_CONVERTER=org.apache.kafka.connect.json.JsonConverter  # 👈 추가
+      - CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE=false  # 👈 JSON Converter일 때 필요
+      - CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE=false  # 👈 JSON Converter일 때 필요
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.3
+    container_name: elasticsearch
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.5.3
+    container_name: kibana
     depends_on:
-      - kafka
-      - mysql
+      - elasticsearch
+    ports:
+      - "5601:5601"
+
+volumes:
+  mysql_data:
