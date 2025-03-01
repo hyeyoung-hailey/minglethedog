@@ -54,6 +54,9 @@ public class KafkaConsumer {
         }
     }
 
+    /**
+     * 새 게시글이 생성될 때 처리
+     */
     private void handleInsertEvent(JsonNode afterNode) {
         if (afterNode == null || !afterNode.hasNonNull("post_id") || !afterNode.hasNonNull("author_id")) {
             log.warn("INSERT 이벤트에서 post_id 또는 author_id가 누락됨: {}", afterNode);
@@ -66,6 +69,9 @@ public class KafkaConsumer {
         log.info(" [INSERT] 게시글 추가됨 - post_id: {}, author_id: {}", postId, authorId);
     }
 
+    /**
+     * 기존 게시글이 수정될 때 처리 (content가 변경된 경우만)
+     */
     private void handleUpdateEvent(JsonNode beforeNode, JsonNode afterNode) {
         if (beforeNode == null || afterNode == null ||
                 !beforeNode.hasNonNull("content") || !afterNode.hasNonNull("content")) {
@@ -84,6 +90,9 @@ public class KafkaConsumer {
         log.info("🔄 [UPDATE] 게시글 내용 변경 - post_id: {}, author_id: {}", postId, authorId);
     }
 
+    /**
+     * 게시글이 삭제될 때 처리
+     */
     private void handleDeleteEvent(JsonNode beforeNode) {
         if (beforeNode == null || !beforeNode.hasNonNull("post_id") || !beforeNode.hasNonNull("author_id")) {
             log.warn("DELETE 이벤트에서 post_id 또는 author_id가 누락됨: {}", beforeNode);
@@ -96,6 +105,9 @@ public class KafkaConsumer {
         log.info(" [DELETE] 게시글 삭제됨 - post_id: {}, author_id: {}", deletedId, authorId);
     }
 
+    /**
+     * Redis 캐시에 게시글 추가
+     */
     private void updateRedisCache(Long authorId, Long postId) {
         Set<String> followers = redisService.getFollowers(authorId);
         if (followers.isEmpty()) {
@@ -107,6 +119,9 @@ public class KafkaConsumer {
         }
     }
 
+    /**
+     * Redis 캐시에서 게시글 삭제
+     */
     private void deleteRedisCache(Long authorId, Long postId) {
         Set<String> followers = redisService.getFollowers(authorId);
         if (followers.isEmpty()) {

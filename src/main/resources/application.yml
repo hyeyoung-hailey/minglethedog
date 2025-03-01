@@ -1,50 +1,45 @@
 spring:
   datasource:
-#    url: jdbc:h2:tcp://localhost/~/securityTest
-    url: jdbc:h2:tcp://localhost:9093/~/securityTest
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
+    url: jdbc:mysql://localhost:3306/mydb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+    username: user
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  #    url: jdbc:h2:tcp://localhost:9093/~/securityTest
+  #    username: sa
+  #    password:
+  #    driver-class-name: org.h2.Driver
 
   jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
         #        show_sql: true
         format_sql: true
-        use_sql_comments: true
-  mustache:
-    servlet:
-      expose-request-attributes: true
 
-  spring:
+  kafka:
+    bootstrap-servers: localhost:29092
+    consumer:
+      #      group-id: post-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+  data:
     redis:
       host: localhost
       port: 6379
 
-    kafka:
-      bootstrap-servers: localhost:9092
-      consumer:
-        group-id: newsfeed-group
-        auto-offset-reset: earliest
-        key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-        value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-        properties:
-          spring.json.trusted.packages: "*"
-      producer:
-        key-serializer: org.apache.kafka.common.serialization.StringSerializer
-        value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-
 logging.level:
+  root: info
+  org.springframework: info  # Spring 관련 로그는 INFO 수준으로 유지
   org.hibernate.SQL: debug
-  org.hibernate.type: trace
-  org.springframework: debug
-
-server:
-  servlet:
-    session:
-      timeout: 30m
+#  org.hibernate.orm.jdbc.bind: trace
+#  org.hibernate.type: trace
 
 jwt:
   secret-key: vDp7NH1pZ1Lf0G/Aq3N5pLhZf0F5fB+tRJdfmXozVwQ=
